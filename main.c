@@ -43,22 +43,12 @@ typedef struct {
   MeeKolok meeOrders[MAX_ORDER];
 } Customer;
 
-/* typedef enum { */
-/*   MK_KOSONG, */
-/*   MK_AYAM, */
-/*   MK_DAGING, */
-/*   MK_TENDON, */
-/*   MK_AYAM_SP, */
-/*   MK_DAGING_SP, */
-/*   MK_TENDON_SP, */
-/* } MeeKolok; */
-
 /* ******************************** */
 /* *      Function Prototypes      * */
 /* ******************************** */
 void displayMenu();
 void displayOptions();
-void displayReceipts(Customer *customer, int numOrders);
+void displayReceipts(Customer customer, int numOrders);
 
 void addOrder(Customer *customer, int numOrders);
 void addExtras(MeeKolok *meeOrder);
@@ -87,7 +77,7 @@ int main() {
       numOrders++;
       break;
     case 2: // Display current receipt
-      displayReceipts(&customer, numOrders);
+      displayReceipts(customer, numOrders);
       break;
     case 3: // Finalize order
       running = 0;
@@ -98,7 +88,7 @@ int main() {
     }
   }
 
-  printf("You have reached the order limit of 4! Here is your final receipt");
+  displayReceipts(customer, numOrders);
   return 0;
 }
 
@@ -139,10 +129,57 @@ void displayOptions() {
   printf("(1-3): ");
 }
 
+void displayReceipts(Customer customer, int numOrders) {
+  const char *meeTypes[] = {
+      "Mee Kolok Kosong", // ID 0
+      "Mee Kolok Ayam",   // ID 1
+      "Mee Kolok Daging", // ID 2
+      "Mee Kolok Tendon"  // ID 3
+  };
+
+  const float regularPrices[] = {4.50, 7.00, 8.00, 13.00};
+  const float specialPrices[] = {0.00, 9.00, 10.00, 16.00};
+  const float extraPrices[] = {1.50, 2.00, 2.50, 3.00};
+
+  float grandTotal = 0.0;
+
+  printf("\n");
+  printf("------------------------------------------\n");
+  printf("               Order receipt             \n");
+  printf("------------------------------------------\n");
+  printf("  Total orders: %d\n", numOrders);
+  for (int i = 0; i < numOrders; i++) {
+    MeeKolok order = customer.meeOrders[i];
+    const char *type = (order.meeType == 'R') ? "Regular" : "Special";
+
+    // Calculate noodle price
+    float noodlePrice = (order.meeType == 'R') ? regularPrices[order.meeID]
+                                               : specialPrices[order.meeID];
+
+    printf("\n  Order #%d: \n", i + 1);
+    printf("    %-16s %7s  %5s %2.2f\n", meeTypes[order.meeID], type, "RM",
+           noodlePrice);
+    float extrasTotal = 0.0;
+    const char *extraNames[] = {"Mee", "Chicken", "Meat", "Tendon"};
+    for (int j = 0; j < 4; j++) {
+      if (order.extrasID[j]) {
+        float extraCost = extraPrices[j] * order.extrasQty[j];
+        printf("    - %s: %d x RM %.2f       RM %.2f\n", extraNames[j],
+               order.extrasQty[j], extraPrices[j], extraCost);
+        extrasTotal += extraCost;
+      }
+    }
+    grandTotal += noodlePrice + extrasTotal;
+  }
+  printf("------------------------------------------\n");
+  printf("  Grand Total %26.2f\n", grandTotal);
+  printf("------------------------------------------\n");
+}
+
 void addOrder(Customer *customer, int numOrders) {
-  int meeID;
-  char char_meeID;
-  char meeType = 'R';
+  int meeID = 0;      // Default mee kolok type
+  char char_meeID;    // Because user input is a char
+  char meeType = 'R'; // Default mee kolok type
 
   printf("Choose one of our famous Mee Kolok (e.g. a): ");
   scanf(" %c", &char_meeID);
@@ -160,14 +197,54 @@ void addOrder(Customer *customer, int numOrders) {
   if (meeID != 0) {
     printf("Choose a type (R for regular, S for special): ");
     scanf(" %c", &meeType);
-
-    addExtras(&customer->meeOrders[numOrders]);
   }
+
+  addExtras(&customer->meeOrders[numOrders]);
 
   customer->meeOrders[numOrders].meeID = meeID;
   customer->meeOrders[numOrders].meeType = meeType;
 }
 
-void addExtras(MeeKolok *meeOrder) {}
+void addExtras(MeeKolok *meeOrder) {
+  int extrasID;
+  int extrasQty;
+  char char_extrasID;
 
-void displayReceipts(Customer *customer, int numOrders) {}
+  while (1) {
+    printf("\n");
+    printf("+=================+\n");
+    printf("|      Extras     |\n");
+    printf("|       (RM)      |\n");
+    printf("+-----------------+\n");
+    printf("| a) Mee 1.50     |\n");
+    printf("| b) Chicken 2.00 |\n");
+    printf("| c) Meat 2.50    |\n");
+    printf("| d) Tendon 3.00  |\n");
+    printf("+=================+\n");
+    printf("Add extras for your Mee Kolok Order\n");
+    printf("(To stop or if you do  not want to add an extra, press S): ");
+    scanf(" %c", &char_extrasID);
+    extrasID = char_extrasID - 'a';
+    if (char_extrasID == 'S') {
+      printf("Order is successful!\n");
+      return;
+    } else if (extrasID < 0 || extrasID > 3) {
+      printf("Invalid choice, please choose a valid extras\n");
+    } else {
+      break;
+    }
+  }
+
+  while (1) {
+    printf("Enter quantity: ");
+    scanf("%d", &extrasQty);
+    if (extrasQty < 0) {
+      printf("Invalid amount");
+    } else {
+      break;
+    }
+  }
+
+  meeOrder->extrasID[extrasID] = 1;
+  meeOrder->extrasQty[extrasID] = extrasQty;
+}
