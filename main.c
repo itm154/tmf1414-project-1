@@ -98,6 +98,7 @@ int main() {
     }
   }
 
+  printf("You have reached the order limit of 4! Here is your final receipt");
   return 0;
 }
 
@@ -107,17 +108,17 @@ int main() {
 void displayMenu() {
   printf("\n");
   printf(
-      "==================================================================\n");
+      "+================================================================+\n");
   printf(
       "|                         Mi Kolok Menu                          |\n");
   printf(
-      "==================================================================\n");
+      "+=====================+=============+=============+==============+\n");
   printf(
-      "|       Package       | Regular (R) | Special (S) | Extra (RM)   |\n");
+      "|       Package       | Regular (R) | Special (S) |    Extras    |\n");
   printf(
-      "|                     |    (RM)     |     (RM)    |              |\n");
+      "|                     |    (RM)     |     (RM)    |     (RM)     |\n");
   printf(
-      "------------------------------------------------------------------\n");
+      "+---------------------+-------------+-------------+--------------|\n");
   printf(
       "| a) Mi Kolok Kosong  | 4.50        | -           | Mee/1.50     |\n");
   printf(
@@ -127,7 +128,7 @@ void displayMenu() {
   printf(
       "| d) Mi Kolok Tendon  | 13.00       | 16.00       | Tendon/3.00  |\n");
   printf(
-      "==================================================================\n");
+      "+================================================================+ \n");
 }
 
 void displayOptions() {
@@ -141,7 +142,7 @@ void displayOptions() {
 void addOrder(Customer *customer, int numOrders) {
   int meeID;
   char char_meeID;
-  char meeType;
+  char meeType = 'R';
 
   printf("Choose one of our famous Mee Kolok (e.g. a): ");
   scanf(" %c", &char_meeID);
@@ -156,45 +157,17 @@ void addOrder(Customer *customer, int numOrders) {
   // Map meeID to 0, 1, 2, 3
   meeID = char_meeID - 'a';
 
-  printf("Choose a type (R for regular, S for special): ");
-  scanf(" %c", &meeType);
+  if (meeID != 0) {
+    printf("Choose a type (R for regular, S for special): ");
+    scanf(" %c", &meeType);
 
-  addExtras(&customer->meeOrders[numOrders]);
+    addExtras(&customer->meeOrders[numOrders]);
+  }
 
   customer->meeOrders[numOrders].meeID = meeID;
   customer->meeOrders[numOrders].meeType = meeType;
 }
 
-void addExtras(MeeKolok *meeOrder) {
-  char extrasType;
-  int extrasQty;
+void addExtras(MeeKolok *meeOrder) {}
 
-  printf("Choose extra type: a) Mee, b) Chicken, c) Meat, d) Tendon: ");
-  scanf(" %c", &extrasType);
-
-  // Map 'a', 'b', 'c', 'd' to 0, 1, 2, 3
-  // See usage explanation in addOrder function
-  int index = extrasType - 'a';
-
-  printf("Enter quantity for the chosen extra: ");
-  scanf("%d", &extrasQty);
-
-  meeOrder->extrasID[index] = 1;           // Mark the extra as selected
-  meeOrder->extrasQty[index] += extrasQty; // Tally up total quantity
-}
-
-void displayReceipts(Customer *customer, int numOrders) {
-  for (int i = 0; i < numOrders; i++) {
-    MeeKolok order = customer->meeOrders[i];
-    const char *type = (order.meeType == 'R') ? "Regular" : "Special";
-
-    printf("Order %d: Mee ID %d, Type %s\n", i + 1, order.meeID, type);
-    printf("Extras:\n");
-    const char *extraNames[] = {"Mee", "Chicken", "Meat", "Tendon"};
-    for (int j = 0; j < 4; j++) {
-      if (order.extrasID[j]) {
-        printf("- %s: %d\n", extraNames[j], order.extrasQty[j]);
-      }
-    }
-  }
-}
+void displayReceipts(Customer *customer, int numOrders) {}
