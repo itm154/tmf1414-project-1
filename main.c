@@ -1,18 +1,19 @@
 // Requirements
-// - Display menu for user to take orders
-// - Allow maximum of 4 packs of MK per order
+// - Display menu for user to take orders ++
+// - Allow maximum of 4 packs of MK per order ++
 // - Display details of MK orders made by each customer
 // - Display the calculated total price in a single receipt
-// - Take order continuously from customers until user choose to exit
+// - Take order continuously from customers until user choose to exit ++
 // - Display the transaction details at anytime when it is needed
 // - Save all the order transaction to a file
+// - Error handling for inputs
 
 #include <stdio.h>
 
 /* ******************************** */
 /* *        Constant values       * */
 /* ******************************** */
-const int MAX_ORDER = 4;
+#define MAX_ORDER 4
 
 const float MK_KOSONG = 4.50;
 const float MK_AYAM = 7.00;
@@ -31,40 +32,72 @@ const float EX_TENDON = 3.00;
 /* ******************************* */
 /* *      Type Definitions       * */
 /* ******************************* */
+typedef struct {
+  int meeID;       // ID for mee kolok, 0-3 mapped to kosong -> tendon
+  char meeType;    // Either R for regular or S for special
+  int extrasID[4]; // ID for extras mapped
+  int extrasQty[4];
+} MeeKolok;
 
-/* ********************************** */
+typedef struct {
+  MeeKolok meeOrders[MAX_ORDER];
+} Customer;
+
+/* typedef enum { */
+/*   MK_KOSONG, */
+/*   MK_AYAM, */
+/*   MK_DAGING, */
+/*   MK_TENDON, */
+/*   MK_AYAM_SP, */
+/*   MK_DAGING_SP, */
+/*   MK_TENDON_SP, */
+/* } MeeKolok; */
+
+/* ******************************** */
+/* *      Function Prototypes      * */
+/* ******************************** */
 void displayMenu();
 void displayOptions();
-void executeOption(int *option);
+void displayReceipts(Customer *customer, int numOrders);
+
+void addOrder(Customer *customer, int numOrders);
+void addExtras(MeeKolok *meeOrder);
 
 /* **************************** */
 /* *      Main Function       * */
 /* **************************** */
 int main() {
-  int order = 0;
+  // Initialize a struct variable named customer
+  Customer customer;
+
+  // Initialize variable to keep track of program status
+  int numOrders = 0;
+  int running = 1;
   int option;
 
-  while (order < MAX_ORDER) {
+  while (numOrders < MAX_ORDER && running != 0) {
     displayMenu();
-    printf("Orders available: %d\n", MAX_ORDER - order);
+    printf("Orders available: %d\n", MAX_ORDER - numOrders);
     displayOptions();
     scanf("%d", &option);
 
     switch (option) {
-    case 1:
-      order++;
+    case 1: // Add orders
+      addOrder(&customer, numOrders);
+      numOrders++;
       break;
-    case 2:
-      order++;
+    case 2: // Display current receipt
+      displayReceipts(&customer, numOrders);
       break;
-    case 3:
-      order++;
+    case 3: // Finalize order
+      running = 0;
       break;
-    default:
-      printf("Invalid option\n");
+    default: // Any other options besides available
+      printf("\nInvalid option\n");
       break;
     }
   }
+
   return 0;
 }
 
@@ -103,4 +136,65 @@ void displayOptions() {
   printf("2. Display current receipt\n");
   printf("3. Finalize order\n");
   printf("(1-3): ");
+}
+
+void addOrder(Customer *customer, int numOrders) {
+  int meeID;
+  char char_meeID;
+  char meeType;
+
+  printf("Choose one of our famous Mee Kolok (e.g. a): ");
+  scanf(" %c", &char_meeID);
+
+  // We can find out the index/ID of the mee by utilizing ascii codes as
+  // integers
+  // Example:
+  // b - a = 1 is equivalient to
+  // 98 - 97 = 1
+  // Reference:
+  // https://www.ibm.com/docs/en/sdse/6.4.0?topic=configuration-ascii-characters-from-33-126
+  // Map meeID to 0, 1, 2, 3
+  meeID = char_meeID - 'a';
+
+  printf("Choose a type (R for regular, S for special): ");
+  scanf(" %c", &meeType);
+
+  addExtras(&customer->meeOrders[numOrders]);
+
+  customer->meeOrders[numOrders].meeID = meeID;
+  customer->meeOrders[numOrders].meeType = meeType;
+}
+
+void addExtras(MeeKolok *meeOrder) {
+  char extrasType;
+  int extrasQty;
+
+  printf("Choose extra type: a) Mee, b) Chicken, c) Meat, d) Tendon: ");
+  scanf(" %c", &extrasType);
+
+  // Map 'a', 'b', 'c', 'd' to 0, 1, 2, 3
+  // See usage explanation in addOrder function
+  int index = extrasType - 'a';
+
+  printf("Enter quantity for the chosen extra: ");
+  scanf("%d", &extrasQty);
+
+  meeOrder->extrasID[index] = 1;           // Mark the extra as selected
+  meeOrder->extrasQty[index] += extrasQty; // Tally up total quantity
+}
+
+void displayReceipts(Customer *customer, int numOrders) {
+  for (int i = 0; i < numOrders; i++) {
+    MeeKolok order = customer->meeOrders[i];
+    const char *type = (order.meeType == 'R') ? "Regular" : "Special";
+
+    printf("Order %d: Mee ID %d, Type %s\n", i + 1, order.meeID, type);
+    printf("Extras:\n");
+    const char *extraNames[] = {"Mee", "Chicken", "Meat", "Tendon"};
+    for (int j = 0; j < 4; j++) {
+      if (order.extrasID[j]) {
+        printf("- %s: %d\n", extraNames[j], order.extrasQty[j]);
+      }
+    }
+  }
 }
