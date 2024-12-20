@@ -1,12 +1,12 @@
 // Requirements
 // - Display menu for user to take orders ++
 // - Allow maximum of 4 packs of MK per order ++
-// - Display details of MK orders made by each customer
-// - Display the calculated total price in a single receipt
+// - Display details of MK orders made by each customer ++
+// - Display the calculated total price in a single receipt ++
 // - Take order continuously from customers until user choose to exit ++
-// - Display the transaction details at anytime when it is needed
+// - Display the transaction details at anytime when it is needed ++
 // - Save all the order transaction to a file
-// - Error handling for inputs
+// - Error handling for inputs ++
 
 #include <ctype.h>
 #include <stdio.h>
@@ -241,39 +241,47 @@ float getPrice(Order *order) {
 }
 
 void displayReceipt(Order order[], int orderCount) {
+  float totalPrice = 0.0;
   for (int i = 0; i < orderCount; i++) {
-    printf("\n");
-    printf("Order #%d: \n", i + 1);
+    printf("------------------------------------\n");
+    printf("            Order receipt           \n");
+    printf("------------------------------------\n");
+    printf("  Order #%d: \n", i + 1);
     switch (order[i].type) {
     case 'a':
-      printf("Mi Kolok Kosong %s%8.2f\n", "RM", MK_KOSONG);
+      printf("  Mi Kolok Kosong %10s%6.2f\n", "RM", MK_KOSONG);
       break;
     case 'b':
-      printf("Mi Kolok Ayam   %s%8.2f\n", "RM",
+      printf("  Mi Kolok Ayam   %10s%6.2f\n", "RM",
              order[i].size == 'R' ? MK_AYAM : MK_AYAM_SP);
       break;
     case 'c':
-      printf("Mi Kolok Daging %s%8.2f\n", "RM",
+      printf("  Mi Kolok Daging %10s%6.2f\n", "RM",
              order[i].size == 'R' ? MK_DAGING : MK_DAGING_SP);
       break;
     case 'd':
-      printf("Mi Kolok Tendon %s%8.2f\n", "RM",
+      printf("  Mi Kolok Tendon %10s%6.2f\n", "RM",
              order[i].size == 'R' ? MK_TENDON : MK_TENDON_SP);
       break;
     }
 
     if (order[i].extras[0] > 0)
-      printf("  Mee x %-2d      %s%8.2f\n", order[i].extras[0], "RM",
+      printf("    Mee x %-2d      %10s%6.2f\n", order[i].extras[0], "RM",
              order[i].extras[0] * EX_MEE);
     if (order[i].extras[1] > 0)
-      printf("  Chicken x %-2d  %s%8.2f\n", order[i].extras[1], "RM",
+      printf("    Chicken x %-2d  %10s%6.2f\n", order[i].extras[1], "RM",
              order[i].extras[1] * EX_CHICKEN);
     if (order[i].extras[2] > 0)
-      printf("  Meat x %-2d     %s%8.2f\n", order[i].extras[2], "RM",
+      printf("    Meat x %-2d     %10s%6.2f\n", order[i].extras[2], "RM",
              order[i].extras[2] * EX_MEAT);
     if (order[i].extras[3] > 0)
-      printf("  Tendon x %-2d   %s%8.2f\n", order[i].extras[3], "RM",
+      printf("    Tendon x %-2d   %10s%6.2f\n", order[i].extras[3], "RM",
              order[i].extras[3] * EX_TENDON);
-    printf("\n");
+
+    totalPrice += order[i].price;
   }
+  printf("------------------------------------\n");
+  printf("  Grand Total     %10s%6.2f\n", "RM", totalPrice);
+  printf("------------------------------------\n");
+  printf("\n");
 }
