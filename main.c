@@ -62,10 +62,16 @@ int main() {
   char continueOrder = 1;
 
   do {
-    printf("Orders available: %d\n", MAX_ORDERS - orderCount);
+    printf("\nOrders available: %d\n", MAX_ORDERS - orderCount);
 
     displayOptions();
-    scanf("%d", &operation);
+
+    if (scanf("%d", &operation) != 1) {
+      printf("\nInvalid input. Please enter a valid number.\n");
+      while (getchar() != '\n')
+        ;
+      continue;
+    }
     switch (operation) {
     case 1: // Add orders
       getOrder(&orders[orderCount]);
