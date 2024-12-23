@@ -51,6 +51,7 @@ void displayReceipt(Order order[], int orderCount);
 void getOrder(Order *order);
 float getPrice(Order *order);
 
+void saveOrders(Order order[], int orderCount);
 /* **************************** */
 /* *      Main Function       * */
 /* **************************** */
@@ -82,6 +83,8 @@ int main() {
       break;
     case 3: // Finalize order
       continueOrder = 0;
+      displayReceipt(orders, orderCount);
+      saveOrders(orders, orderCount);
       break;
     default: // Any other options besides available
       printf("\nInvalid option\n");
@@ -290,4 +293,44 @@ void displayReceipt(Order order[], int orderCount) {
   printf("  Grand Total     %10s%6.2f\n", "RM", totalPrice);
   printf("------------------------------------\n");
   printf("\n");
+}
+
+void saveOrders(Order order[], int orderCount) {
+  FILE *fptr;
+  fptr = fopen("transactions.dat", "a");
+
+  if (fptr == NULL) {
+    printf("Unable to open transactions file");
+  } else {
+    printf("Saving transaction details...\n");
+    for (int i = 0; i < orderCount; i++) {
+      fprintf(fptr, "%03d  ", i + 1);
+      switch (order[i].type) {
+      case 'a':
+        fprintf(fptr, "%-16s\t", "Mee Kolok Kosong");
+        break;
+      case 'b':
+        fprintf(fptr, "%-16s\t", "Mee Kolok Ayam");
+        break;
+      case 'c':
+        fprintf(fptr, "%-16s\t", "Mee Kolok Daging");
+        break;
+      case 'd':
+        fprintf(fptr, "%-16s\t", "Mee Kolok Tendon");
+        break;
+      }
+
+      fprintf(fptr, "%c\t", order[i].size);
+      for (int j = 0; j < 4; j++) {
+        if (order[i].extras[j] != 0) {
+          fprintf(fptr, "%d\t", order[i].extras[j]);
+        } else {
+          fprintf(fptr, "-\t");
+        }
+      }
+      fprintf(fptr, "RM%6.2f\n", order[i].price);
+    }
+  }
+
+  fclose(fptr);
 }
