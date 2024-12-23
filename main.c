@@ -51,8 +51,11 @@ void displayReceipt(Order order[], int orderCount);
 void getOrder(Order *order);
 float getPrice(Order *order);
 
-void saveOrders(Order order[], int orderCount);
+void writeTrxLogs(Order order[], int orderCount);
+void writeTrxInfo(float currentTotal, int currentReceiptNumber);
+void readTrxInfo(float *total, int *receiptNumber);
 
+void writeTrxFile();
 /* **************************** */
 /* *      Main Function       * */
 /* **************************** */
@@ -86,7 +89,8 @@ int main() {
     case 3: // Finalize order
       continueOrder = 0;
       displayReceipt(orders, orderCount);
-      saveOrders(orders, orderCount);
+      writeTrxLogs(orders, orderCount);
+      writeTrxFile();
       break;
     default: // Any other options besides available
       printf("\nInvalid option\n");
@@ -107,28 +111,28 @@ int main() {
 /* *********************************** */
 void displayMenu() {
   printf("\n");
-  printf(
-      "+================================================================+\n");
-  printf(
-      "|                         Mi Kolok Menu                          |\n");
-  printf(
-      "+=====================+=============+=============+==============+\n");
-  printf(
-      "|       Package       | Regular (R) | Special (S) |    Extras    |\n");
-  printf(
-      "|                     |    (RM)     |     (RM)    |     (RM)     |\n");
-  printf(
-      "+---------------------+-------------+-------------+--------------|\n");
-  printf(
-      "| a) Mi Kolok Kosong  | 4.50        | -           | Mee/1.50     |\n");
-  printf(
-      "| b) Mi Kolok Ayam    | 7.00        | 9.00        | Chicken/2.00 |\n");
-  printf(
-      "| c) Mi Kolok Daging  | 8.00        | 10.00       | Meat/2.50    |\n");
-  printf(
-      "| d) Mi Kolok Tendon  | 13.00       | 16.00       | Tendon/3.00  |\n");
-  printf(
-      "+================================================================+\n");
+  printf("+================================================================"
+         "+\n");
+  printf("|                         Mi Kolok Menu                          "
+         "|\n");
+  printf("+=====================+=============+=============+=============="
+         "+\n");
+  printf("|       Package       | Regular (R) | Special (S) |    Extras    "
+         "|\n");
+  printf("|                     |    (RM)     |     (RM)    |     (RM)     "
+         "|\n");
+  printf("+---------------------+-------------+-------------+--------------"
+         "|\n");
+  printf("| a) Mi Kolok Kosong  | 4.50        | -           | Mee/1.50     "
+         "|\n");
+  printf("| b) Mi Kolok Ayam    | 7.00        | 9.00        | Chicken/2.00 "
+         "|\n");
+  printf("| c) Mi Kolok Daging  | 8.00        | 10.00       | Meat/2.50    "
+         "|\n");
+  printf("| d) Mi Kolok Tendon  | 13.00       | 16.00       | Tendon/3.00  "
+         "|\n");
+  printf("+================================================================"
+         "+\n");
 }
 
 void displayExtras() {
@@ -305,42 +309,125 @@ void displayReceipt(Order order[], int orderCount) {
   printf("\n");
 }
 
-void saveOrders(Order order[], int orderCount) {
+void writeTrxLogs(Order order[], int orderCount) {
+
   FILE *fptr;
-  fptr = fopen("transactions.dat", "a");
+  fptr = fopen("logs.dat", "a");
+
+  float prevTotal = 0.0;
+  int prevReceiptNumber = 0;
 
   if (fptr == NULL) {
-    printf("Unable to open transactions file");
-  } else {
-    printf("Saving transaction details...\n");
-    for (int i = 0; i < orderCount; i++) {
-      fprintf(fptr, "%03d  ", i + 1);
-      switch (order[i].type) {
-      case 'a':
-        fprintf(fptr, "%-16s\t", "Mee Kolok Kosong");
-        break;
-      case 'b':
-        fprintf(fptr, "%-16s\t", "Mee Kolok Ayam");
-        break;
-      case 'c':
-        fprintf(fptr, "%-16s\t", "Mee Kolok Daging");
-        break;
-      case 'd':
-        fprintf(fptr, "%-16s\t", "Mee Kolok Tendon");
-        break;
-      }
-
-      fprintf(fptr, "%c\t", order[i].size);
-      for (int j = 0; j < 4; j++) {
-        if (order[i].extras[j] != 0) {
-          fprintf(fptr, "%d\t", order[i].extras[j]);
-        } else {
-          fprintf(fptr, "-\t");
-        }
-      }
-      fprintf(fptr, "RM%6.2f\n", order[i].price);
-    }
+    printf("Unable to open transactions log file");
+    return;
   }
 
+  readTrxInfo(&prevTotal, &prevReceiptNumber);
+
+  float currentTotal = 0.0;
+  for (int i = 0; i < orderCount; i++) {
+    fprintf(fptr, "%03d         |", prevReceiptNumber + 1);
+    switch (order[i].type) {
+    case 'a':
+      fprintf(fptr, " %-16s |", "Mee Kolok Kosong");
+      break;
+    case 'b':
+      fprintf(fptr, " %-16s |", "Mee Kolok Ayam");
+      break;
+    case 'c':
+      fprintf(fptr, " %-16s |", "Mee Kolok Daging");
+      break;
+    case 'd':
+      fprintf(fptr, " %-16s |", "Mee Kolok Tendon");
+      break;
+    }
+
+    currentTotal += order[i].price;
+    fprintf(fptr, " %-4c |", order[i].size);
+    for (int j = 0; j < 4; j++) {
+      if (order[i].extras[j] != 0) {
+        fprintf(fptr, " %-7d |", order[i].extras[j]);
+      } else {
+        fprintf(fptr, " %-7s |", "-");
+      }
+    }
+    fprintf(fptr, " RM%6.2f\n", order[i].price);
+  }
+  writeTrxInfo(currentTotal + prevTotal, prevReceiptNumber + 1);
+
   fclose(fptr);
+}
+
+void writeTrxInfo(float currentTotal, int currentReceiptNumber) {
+  FILE *fptr;
+  fptr = fopen("info.dat", "w");
+
+  if (fptr == NULL) {
+    printf("Unable to save transaction information\n");
+    return;
+  }
+
+  // Write total on the first line and receipt number on the second line
+  fprintf(fptr, "%.2f\n", currentTotal);
+  fprintf(fptr, "%d\n", currentReceiptNumber);
+
+  fclose(fptr);
+}
+
+void readTrxInfo(float *total, int *receiptNumber) {
+  FILE *fptr;
+  fptr = fopen("info.dat", "r");
+
+  if (fptr == NULL) {
+    // Default values if file does not exist
+    *total = 0.0;
+    *receiptNumber = 0;
+    return;
+  }
+
+  // Read total from the first line and receipt number from the second line
+  fscanf(fptr, "%f", total);
+  fscanf(fptr, "%d", receiptNumber);
+
+  fclose(fptr);
+}
+
+void writeTrxFile() {
+  FILE *fptr_transactions, *fptr_logs, *fptr_info;
+  fptr_transactions = fopen("transactions.dat", "w");
+  fptr_logs = fopen("logs.dat", "r");
+  fptr_info = fopen("info.dat", "r");
+
+  char ch;
+  float total;
+
+  if (fptr_transactions == NULL || fptr_logs == NULL || fptr_info == NULL) {
+    printf("Unable to open transaction file\n");
+    return;
+  }
+
+  printf("Saving transaction details...\n");
+
+  fscanf(fptr_info, "%f", &total);
+
+  fprintf(fptr_transactions,
+          "Receipt No. | Mee Kolok        | Type | Chicken | Meat    | Tendon  "
+          "| Mee     | Amount (RM)\n");
+
+  // Write transaction logs
+  ch = fgetc(fptr_logs);
+  while (ch != EOF) {
+    /* Write to destination file */
+    fputc(ch, fptr_transactions);
+
+    /* Read next character from source file */
+    ch = fgetc(fptr_logs);
+  }
+  fprintf(fptr_transactions, "-------------------------------------------------"
+                             "------------------------------------------\n");
+  fprintf(fptr_transactions, "%82s%6.2f", "Total:", total);
+
+  fclose(fptr_transactions);
+  fclose(fptr_logs);
+  fclose(fptr_info);
 }
