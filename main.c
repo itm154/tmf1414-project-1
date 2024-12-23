@@ -52,6 +52,7 @@ void getOrder(Order *order);
 float getPrice(Order *order);
 
 void saveOrders(Order order[], int orderCount);
+
 /* **************************** */
 /* *      Main Function       * */
 /* **************************** */
@@ -73,6 +74,7 @@ int main() {
         ;
       continue;
     }
+
     switch (operation) {
     case 1: // Add orders
       getOrder(&orders[orderCount]);
@@ -90,8 +92,13 @@ int main() {
       printf("\nInvalid option\n");
       break;
     }
-  } while (continueOrder == 1 && orderCount < 4);
+  } while (continueOrder == 1 && orderCount < MAX_ORDERS);
 
+  if (orderCount == MAX_ORDERS) {
+    printf("You have reached your order limits!. Come again another time\n");
+
+    displayReceipt(orders, orderCount);
+  }
   return 0;
 }
 
@@ -120,8 +127,8 @@ void displayMenu() {
       "| c) Mi Kolok Daging  | 8.00        | 10.00       | Meat/2.50    |\n");
   printf(
       "| d) Mi Kolok Tendon  | 13.00       | 16.00       | Tendon/3.00  |\n");
-  printf("+================================================================+ "
-         "\n");
+  printf(
+      "+================================================================+\n");
 }
 
 void displayExtras() {
@@ -184,7 +191,7 @@ void getOrder(Order *order) {
   char option;
 
   // Set initial values of all extra to 0
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < MAX_ORDERS; i++) {
     order->extras[i] = 0;
   }
 
@@ -251,10 +258,12 @@ float getPrice(Order *order) {
 
 void displayReceipt(Order order[], int orderCount) {
   float totalPrice = 0.0;
+
+  printf("\n");
+  printf("------------------------------------\n");
+  printf("            Order receipt           \n");
+  printf("------------------------------------\n");
   for (int i = 0; i < orderCount; i++) {
-    printf("------------------------------------\n");
-    printf("            Order receipt           \n");
-    printf("------------------------------------\n");
     printf("  Order #%d: \n", i + 1);
     switch (order[i].type) {
     case 'a':
@@ -286,6 +295,7 @@ void displayReceipt(Order order[], int orderCount) {
     if (order[i].extras[3] > 0)
       printf("    Tendon x %-2d   %10s%6.2f\n", order[i].extras[3], "RM",
              order[i].extras[3] * EX_TENDON);
+    printf("\n");
 
     totalPrice += order[i].price;
   }
