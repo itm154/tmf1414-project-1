@@ -166,19 +166,19 @@ void getOrder(Order *order) {
   // ------------- //
   // Order section //
   // ------------- //
-  char type;
+  char meeType;
 
   do {
-    printf("Select Mee type (a/b/c/d): ");
-    scanf(" %c", &type);
-    type = tolower(type); // Make input case insensitive
-    if (type != 'a' && type != 'b' && type != 'c' && type != 'd') {
-      printf("Invalid input. PLease select a valid type (a/b/c/d)\n");
+    printf("Select Mee meeType (a/b/c/d): ");
+    scanf(" %c", &meeType);
+    meeType = tolower(meeType); // Make input case insensitive
+    if (meeType < 'a' || meeType > 'd') {
+      printf("Invalid input. PLease select a valid meeType (a/b/c/d)\n");
     }
-  } while (type != 'a' && type != 'b' && type != 'c' && type != 'd');
-  order->type = tolower(type);
+  } while (meeType < 'a' || meeType > 'd');
+  order->type = tolower(meeType);
 
-  if (type != 'a') {
+  if (meeType != 'a') {
     do {
       printf("Select size (R for Regular, S for Special): ");
       scanf(" %c", &order->size);
@@ -196,7 +196,7 @@ void getOrder(Order *order) {
   // -------------- //
   int extraQty;
   char addExtras;
-  char option;
+  char extraType;
 
   // Set initial values of all extra to 0
   for (int i = 0; i < MAX_ORDERS; i++) {
@@ -208,7 +208,7 @@ void getOrder(Order *order) {
     scanf(" %c", &addExtras);
     addExtras = tolower(addExtras); // Make input case insensitive
     if (addExtras != 'y' && addExtras != 'n') {
-      printf("Invalid input. Please enter 'y' or 'n'.\n");
+      printf("Invalid input. Please enter 'y' or 'n'\n");
     }
   } while (addExtras != 'y' && addExtras != 'n');
 
@@ -217,22 +217,25 @@ void getOrder(Order *order) {
       displayExtras();
       do {
         printf("Select extra (a/b/c/d) or 'q' to stop: ");
-        scanf(" %c", &option);
-        option = tolower(option);
-      } while ((option < 'a' || option > 'd') && option != 'q');
+        scanf(" %c", &extraType);
+        extraType = tolower(extraType);
+        if (extraType < 'a' || extraType > 'd') {
+          printf("Invalid input. PLease select a valid extraType(a/b/c/d/q)\n");
+        }
+      } while ((extraType < 'a' || extraType > 'd') && extraType != 'q');
 
-      if (option >= 'a' && option <= 'd') {
+      if (extraType >= 'a' && extraType <= 'd') {
         do {
           printf("Enter quantity: ");
           if (scanf("%d", &extraQty) != 1 || extraQty < 0) {
-            printf("Invalid quantity. Please enter a non-negative number.\n");
+            printf("Invalid quantity. Please enter a non-negative number\n");
             while (getchar() != '\n')
               extraQty = -1;
           }
         } while (extraQty < 0);
-        order->extras[option - 'a'] += extraQty;
+        order->extras[extraType - 'a'] += extraQty;
       }
-    } while (option != 'q');
+    } while (extraType != 'q');
   }
 
   order->price = getPrice(order);
