@@ -56,11 +56,12 @@ void writeTrxInfo(float currentTotal, int currentReceiptNumber);
 void readTrxInfo(float *total, int *receiptNumber);
 
 void writeTrxFile();
+
 /* **************************** */
 /* *      Main Function       * */
 /* **************************** */
 int main() {
-  Order orders[4];
+  Order orders[MAX_ORDERS];
   int orderCount = 0;
 
   int operation;
@@ -72,7 +73,7 @@ int main() {
     displayOptions();
 
     if (scanf("%d", &operation) != 1) {
-      printf("\nInvalid input. Please enter a valid number.\n");
+      printf("\nInvalid input. Please enter a valid number\n");
       while (getchar() != '\n')
         ;
       continue;
@@ -96,12 +97,15 @@ int main() {
       printf("\nInvalid option\n");
       break;
     }
-  } while (continueOrder == 1 && orderCount < MAX_ORDERS);
+  } while (continueOrder != 0 && orderCount < MAX_ORDERS);
 
   if (orderCount == MAX_ORDERS) {
+    displayReceipt(orders, orderCount);
+
     printf("You have reached your order limits!. Come again another time\n");
 
-    displayReceipt(orders, orderCount);
+    writeTrxLogs(orders, orderCount);
+    writeTrxFile();
   }
   return 0;
 }
@@ -304,7 +308,7 @@ void displayReceipt(Order order[], int orderCount) {
     totalPrice += order[i].price;
   }
   printf("------------------------------------\n");
-  printf("  Grand Total     %10s%6.2f\n", "RM", totalPrice);
+  printf("  Total           %10s%6.2f\n", "RM", totalPrice);
   printf("------------------------------------\n");
   printf("\n");
 }
@@ -314,7 +318,7 @@ void writeTrxLogs(Order order[], int orderCount) {
   FILE *fptr;
   fptr = fopen("logs.dat", "a");
 
-  float prevTotal = 0.0;
+  float prevTotalSales = 0.0;
   int prevReceiptNumber = 0;
 
   if (fptr == NULL) {
@@ -322,7 +326,7 @@ void writeTrxLogs(Order order[], int orderCount) {
     return;
   }
 
-  readTrxInfo(&prevTotal, &prevReceiptNumber);
+  readTrxInfo(&prevTotalSales, &prevReceiptNumber);
 
   float currentTotal = 0.0;
   for (int i = 0; i < orderCount; i++) {
@@ -353,7 +357,9 @@ void writeTrxLogs(Order order[], int orderCount) {
     }
     fprintf(fptr, " RM%6.2f\n", order[i].price);
   }
-  writeTrxInfo(currentTotal + prevTotal, prevReceiptNumber + 1);
+
+  fprintf(fptr, "\n");
+  writeTrxInfo(prevTotalSales + currentTotal, prevReceiptNumber + 1);
 
   fclose(fptr);
 }
