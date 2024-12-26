@@ -331,24 +331,26 @@ void updateTransactionsFile(Order order[], int orderCount) {
   fptr = fopen("transactions.dat", "r+");
   if (fptr == NULL) {
     fptr = fopen("transactions.dat", "w+");
-
     if (fptr == NULL) {
       printf("Unable to open or create transactions file\n");
       return;
     }
+
+    // Write the initial receipt number, total sales, and column headers.
     fprintf(fptr, "0 0.0\n");
-
-    fprintf(fptr, "\nNo.  Mee Kolok Type    Size  Chicken  Meat     Tendon  "
-                  " Mee      Amount (RM)\n");
-
-    rewind(fptr);
+    fprintf(fptr, "\n\nNo.  Mee Kolok Type    Size  Chicken   Meat     Tendon  "
+                  "Mee       Amount (RM)\n");
+    rewind(fptr); // Reset the file pointer to the beginning after writing the
+                  // header.
   }
 
   int latestReceiptNumber = 0;
   float totalSales = 0.0;
 
+  // Read the receipt number and total sales from the beginning of the file.
   fscanf(fptr, "%d %f", &latestReceiptNumber, &totalSales);
 
+  // Move the file pointer to the end to append the new orders.
   fseek(fptr, 0, SEEK_END);
 
   float totalPrice = 0.0;
@@ -384,10 +386,15 @@ void updateTransactionsFile(Order order[], int orderCount) {
     totalPrice += order[i].price;
   }
 
+  // Update the total sales value.
   totalSales += totalPrice;
 
+  // Write a "TOTAL SALES" row at the bottom of the table.
+  fprintf(fptr, "\nTotal Sales: RM%6.2f\n", totalSales);
+
+  // Rewind the file and update the receipt number and total sales at the top.
   rewind(fptr);
-  fprintf(fptr, "%d %-6.2f\n", latestReceiptNumber + 1, totalSales);
+  fprintf(fptr, "%d %.2f\n", latestReceiptNumber + 1, totalSales);
 
   fclose(fptr);
 }
