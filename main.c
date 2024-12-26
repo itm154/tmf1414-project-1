@@ -58,6 +58,8 @@ void getOrder(Order *order);
 // Calculate the price for all orders in a single session
 float getPrice(Order *order);
 
+void updateTransactionsFile(Order order[], int orderCount);
+
 /* **************************** */
 /* *      Main Function       * */
 /* **************************** */
@@ -94,6 +96,7 @@ int main() {
     case 3: // Finalize order
       if (orderCount != 0) {
         displayReceipt(orders, orderCount);
+        updateTransactionsFile(orders, orderCount);
         return 0;
       } // Only finalize an order if an order exists
 
@@ -321,4 +324,70 @@ void displayReceipt(Order order[], int orderCount) {
   printf("  Total           %10s%6.2f\n", "RM", totalPrice);
   printf("------------------------------------\n");
   printf("\n");
+}
+
+void updateTransactionsFile(Order order[], int orderCount) {
+  FILE *fptr;
+  fptr = fopen("transactions.dat", "r+");
+  if (fptr == NULL) {
+    fptr = fopen("transactions.dat", "w+");
+
+    if (fptr == NULL) {
+      printf("Unable to open or create transactions file\n");
+      return;
+    }
+    fprintf(fptr, "0 0.0\n");
+
+    fprintf(fptr, "\nNo.  Mee Kolok Type    Size  Chicken  Meat     Tendon  "
+                  " Mee      Amount (RM)\n");
+
+    rewind(fptr);
+  }
+
+  int latestReceiptNumber = 0;
+  float totalSales = 0.0;
+
+  fscanf(fptr, "%d %f", &latestReceiptNumber, &totalSales);
+
+  fseek(fptr, 0, SEEK_END);
+
+  float totalPrice = 0.0;
+  for (int i = 0; i < orderCount; i++) {
+    fprintf(fptr, "%03d ", latestReceiptNumber + 1);
+    switch (order[i].type) {
+    case 'a':
+      fprintf(fptr, " %-16s ", "Mee Kolok Kosong");
+      break;
+    case 'b':
+      fprintf(fptr, " %-16s ", "Mee Kolok Ayam");
+      break;
+    case 'c':
+      fprintf(fptr, " %-16s ", "Mee Kolok Daging");
+      break;
+    case 'd':
+      fprintf(fptr, " %-16s ", "Mee Kolok Tendon");
+      break;
+    }
+
+    fprintf(fptr, " %-4c ", order[i].size);
+
+    for (int j = 0; j < 4; j++) {
+      if (order[i].extras[j] != 0) {
+        fprintf(fptr, " %-7d ", order[i].extras[j]);
+      } else {
+        fprintf(fptr, " %-7s ", "-");
+      }
+    }
+
+    fprintf(fptr, " RM%6.2f\n", order[i].price);
+
+    totalPrice += order[i].price;
+  }
+
+  totalSales += totalPrice;
+
+  rewind(fptr);
+  fprintf(fptr, "%d %-6.2f\n", latestReceiptNumber + 1, totalSales);
+
+  fclose(fptr);
 }
