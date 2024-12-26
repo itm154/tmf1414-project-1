@@ -10,7 +10,6 @@
 
 #include <ctype.h>
 #include <stdio.h>
-#include <string.h>
 
 /* ******************************** */
 /* *        Constant values       * */
@@ -59,18 +58,6 @@ void getOrder(Order *order);
 // Calculate the price for all orders in a single session
 float getPrice(Order *order);
 
-// Log file to keep track of transaction
-void writeTrxLogs(Order order[], int orderCount);
-
-// File to keep track of sales and receipt number
-void writeTrxInfo(float currentTotal, int currentReceiptNumber);
-
-// Read total sales and receipt number
-void readTrxInfo(float *total, int *receiptNumber);
-
-// Compiles sales and transaction data into a single file
-void writeTrxFile();
-
 /* **************************** */
 /* *      Main Function       * */
 /* **************************** */
@@ -107,8 +94,6 @@ int main() {
     case 3: // Finalize order
       if (orderCount != 0) {
         displayReceipt(orders, orderCount);
-        writeTrxLogs(orders, orderCount);
-        writeTrxFile();
         return 0;
       } // Only finalize an order if an order exists
 
@@ -123,8 +108,6 @@ int main() {
   // Do the same operation as finalize order when order limit is reached
   displayReceipt(orders, orderCount);
   printf("You have reached your order limit!. Come again another time\n");
-  writeTrxLogs(orders, orderCount);
-  writeTrxFile();
 
   return 0;
 }
@@ -338,129 +321,4 @@ void displayReceipt(Order order[], int orderCount) {
   printf("  Total           %10s%6.2f\n", "RM", totalPrice);
   printf("------------------------------------\n");
   printf("\n");
-}
-
-void writeTrxLogs(Order order[], int orderCount) {
-
-  FILE *fptr;
-  fptr = fopen("logs.dat", "a");
-
-  float prevTotalSales = 0.0;
-  int prevReceiptNumber = 0;
-
-  if (fptr == NULL) {
-    printf("Unable to open transactions log file\n");
-    return;
-  }
-
-  readTrxInfo(&prevTotalSales, &prevReceiptNumber);
-
-  float currentTotal = 0.0;
-  for (int i = 0; i < orderCount; i++) {
-    fprintf(fptr, "%03d         |", prevReceiptNumber + 1);
-    switch (order[i].type) {
-    case 'a':
-      fprintf(fptr, " %-16s |", "Mee Kolok Kosong");
-      break;
-    case 'b':
-      fprintf(fptr, " %-16s |", "Mee Kolok Ayam");
-      break;
-    case 'c':
-      fprintf(fptr, " %-16s |", "Mee Kolok Daging");
-      break;
-    case 'd':
-      fprintf(fptr, " %-16s |", "Mee Kolok Tendon");
-      break;
-    }
-
-    currentTotal += order[i].price;
-    fprintf(fptr, " %-4c |", order[i].size);
-    for (int j = 0; j < 4; j++) {
-      if (order[i].extras[j] != 0) {
-        fprintf(fptr, " %-7d |", order[i].extras[j]);
-      } else {
-        fprintf(fptr, " %-7s |", "-");
-      }
-    }
-    fprintf(fptr, " RM%6.2f\n", order[i].price);
-  }
-
-  fprintf(fptr, "\n");
-  writeTrxInfo(prevTotalSales + currentTotal, prevReceiptNumber + 1);
-
-  fclose(fptr);
-}
-
-void writeTrxInfo(float currentTotal, int currentReceiptNumber) {
-  FILE *fptr;
-  fptr = fopen("info.dat", "w");
-
-  if (fptr == NULL) {
-    printf("Unable to save transaction information\n");
-    return;
-  }
-
-  // Write total on the first line and receipt number on the second line
-  fprintf(fptr, "%.2f\n", currentTotal);
-  fprintf(fptr, "%d\n", currentReceiptNumber);
-
-  fclose(fptr);
-}
-
-void readTrxInfo(float *total, int *receiptNumber) {
-  FILE *fptr;
-  fptr = fopen("info.dat", "r");
-
-  if (fptr == NULL) {
-    // Default values if file does not exist
-    *total = 0.0;
-    *receiptNumber = 0;
-    return;
-  }
-
-  // Read total from the first line and receipt number from the second line
-  fscanf(fptr, "%f", total);
-  fscanf(fptr, "%d", receiptNumber);
-
-  fclose(fptr);
-}
-
-void writeTrxFile() {
-  FILE *fptr_transactions, *fptr_logs, *fptr_info;
-  fptr_transactions = fopen("transactions.dat", "w");
-  fptr_logs = fopen("logs.dat", "r");
-  fptr_info = fopen("info.dat", "r");
-
-  char ch;
-  float total;
-
-  if (fptr_transactions == NULL || fptr_logs == NULL || fptr_info == NULL) {
-    printf("Unable to open transaction file\n");
-    return;
-  }
-
-  printf("Saving transaction details...\n");
-
-  fscanf(fptr_info, "%f", &total);
-
-  fprintf(fptr_transactions,
-          "Receipt No. | Mee Kolok Type   | Size | Chicken | Meat    | Tendon  "
-          "| Mee     | Amount (RM)\n");
-
-  // Write transaction logs
-  ch = fgetc(fptr_logs);
-  while (ch != EOF) {
-    /* Write to destination file */
-    fputc(ch, fptr_transactions);
-
-    /* Read next character from source file */
-    ch = fgetc(fptr_logs);
-  }
-  fprintf(fptr_transactions, "-------------------------------------------------"
-                             "------------------------------------------\n");
-  fprintf(fptr_transactions, "%82s%6.2f", "Total:", total);
-
-  fclose(fptr_transactions);
-  fclose(fptr_logs);
-  fclose(fptr_info);
 }
