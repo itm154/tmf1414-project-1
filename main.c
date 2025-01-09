@@ -5,7 +5,7 @@
 // - Display the calculated total price in a single receipt ++
 // - Take order continuously from customers until user choose to exit ++
 // - Display the transaction details at anytime when it is needed ++
-// - Save all the order transaction to a file
+// - Save all the order transaction to a file ++
 // - Error handling for inputs ++
 
 #include <ctype.h>
@@ -40,14 +40,20 @@ typedef struct {
   char type;     // Mee kolok type (Kosong, Ayam, ...)
   char size;     // Mee kolok size (regular, special)
   int extras[4]; // Int array of extras
-  float price;   // Total price of the whole order
+                 // The way this implementation works:
+                 // - The index represent the type of extras
+                 // - The value in each index represents the amount
+                 // Example: [1, 0, 2, 0]
+                 // 1 Mee, 0 Chicken, 2 Meat, 0 Tendon
+
+  float price; // Total price of the whole order
 } Order;
 
 /* ********************************* */
 /* *      Function Prototypes      * */
 /* ********************************* */
 // Various display functions
-// Most of these is just to declutter main()
+// Most of these is just to declutter main() function
 void displayMenu();
 void displayExtras();
 void displayOperations();
@@ -56,10 +62,10 @@ void displayReceipt(Order order[], int orderCount);
 // Responsible for taking user orders
 void getOrder(Order *order);
 
-// Calculate the price for all orders in a single session
+// Calculate the price for *an order*
 float getPrice(Order *order);
 
-// Log file to keep track of transaction
+// Log file to keep track of all transactions
 void writeTrxLogs(Order order[], int orderCount);
 
 // File to keep track of sales and receipt number
@@ -80,17 +86,23 @@ int main() {
 
   int operation;
 
+  printf("----------------------------------\n");
+  printf("Welcome to Mee Kolok Nyaman Store!\n");
+  printf("----------------------------------\n");
   do {
     printf("\nOrders available: %d\n", MAX_ORDERS - orderCount);
 
     displayOperations();
 
+    // scanf returns 1 if it successfully assigns an input to a variable
     if (scanf("%d", &operation) != 1) {
       printf("\nInvalid input. Please enter a valid number\n");
 
       // Clear input buffer
       // Explanation
       // https://stackoverflow.com/questions/7898215/how-can-i-clear-an-input-buffer-in-c
+      // TLDR: Better than just using getchar() because it consumes all
+      // characters in buffer overflow
       while (getchar() != '\n')
         ;
       continue;
@@ -118,7 +130,8 @@ int main() {
       printf("\nInvalid option, Please choose a valid operation\n");
       break;
     }
-  } while (orderCount < MAX_ORDERS);
+  } while (orderCount < MAX_ORDERS); // Keep taking operations and orders while
+                                     // under maximum order limit
 
   // Do the same operation as finalize order when order limit is reached
   displayReceipt(orders, orderCount);
@@ -182,11 +195,10 @@ void displayOperations() {
 void getOrder(Order *order) {
   displayMenu();
 
-  // ------------- //
-  // Order section //
-  // ------------- //
+  // ------------------ //
+  // Main Order section //
+  // ------------------ //
   char meeType;
-
   do {
     printf("Select Mee type (a/b/c/d): ");
     scanf(" %c", &meeType);
@@ -353,6 +365,7 @@ void writeTrxLogs(Order order[], int orderCount) {
     return;
   }
 
+  // Read and assign previous total sales and receipt number
   readTrxInfo(&prevTotalSales, &prevReceiptNumber);
 
   float currentTotal = 0.0;
@@ -385,7 +398,7 @@ void writeTrxLogs(Order order[], int orderCount) {
     fprintf(fptr, " RM%6.2f\n", order[i].price);
   }
 
-  fprintf(fptr, "\n");
+  // Write the latest total sales and receipt number for next use
   writeTrxInfo(prevTotalSales + currentTotal, prevReceiptNumber + 1);
 
   fclose(fptr);
@@ -432,33 +445,40 @@ void writeTrxFile() {
   fptr_info = fopen("info.dat", "r");
 
   char ch;
-  float total;
+  float totalSales;
 
   if (fptr_transactions == NULL || fptr_logs == NULL || fptr_info == NULL) {
-    printf("Unable to open transaction file\n");
+    printf("Unable to open some file(s)\n");
     return;
   }
 
   printf("Saving transaction details...\n");
 
-  fscanf(fptr_info, "%f", &total);
+  fscanf(fptr_info, "%f", &totalSales);
 
+  // Header row for table
   fprintf(fptr_transactions,
           "Receipt No. | Mee Kolok Type   | Size | Chicken | Meat    | Tendon  "
           "| Mee     | Amount (RM)\n");
+  fprintf(fptr_transactions,
+          "--------------------------------------------------------------------"
+          "-----------------------\n");
 
   // Write transaction logs
+  // This block of code copies every character in logs.dat file and places into
+  // transaction.dat file
+  // Essentially copy and pasting
   ch = fgetc(fptr_logs);
   while (ch != EOF) {
-    /* Write to destination file */
+    // Write to destination file
     fputc(ch, fptr_transactions);
 
-    /* Read next character from source file */
+    // Read next character from source file
     ch = fgetc(fptr_logs);
   }
   fprintf(fptr_transactions, "-------------------------------------------------"
                              "------------------------------------------\n");
-  fprintf(fptr_transactions, "%82s%6.2f", "Total:", total);
+  fprintf(fptr_transactions, "%82s%6.2f", "Total:", totalSales);
 
   fclose(fptr_transactions);
   fclose(fptr_logs);
