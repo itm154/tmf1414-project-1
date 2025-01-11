@@ -464,10 +464,10 @@ void writeTrxFile() {
           "--------------------------------------------------------------------"
           "-----------------------\n");
 
-  // Write transaction logs
-  // This block of code copies every character in logs.dat file and places into
-  // transaction.dat file
-  // Essentially copy and pasting
+  // Copies every character in logs.dat file and places into transaction.dat
+  // file
+  // Reference:
+  // https://allthingsopen.org/articles/learning-to-program-copy-files
   ch = fgetc(fptr_logs);
   while (ch != EOF) {
     // Write to destination file
