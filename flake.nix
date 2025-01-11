@@ -30,6 +30,9 @@
             gcc
             gnumake
             gdb
+
+            marp-cli
+            nodejs
           ];
         };
       };

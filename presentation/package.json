@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "markdown-it-container": "^4.0.0",
+    "markdown-it-mark": "^4.0.0"
+  }
+}
