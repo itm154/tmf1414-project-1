@@ -89,6 +89,7 @@ int main() {
   printf("----------------------------------\n");
   printf("Welcome to Mee Kolok Nyaman Store!\n");
   printf("----------------------------------\n");
+
   do {
     printf("\nOrders available: %d\n", MAX_ORDERS - orderCount);
 
@@ -200,11 +201,11 @@ void getOrder(Order *order) {
   // ------------------ //
   char meeType;
   do {
-    printf("Select Mee type (a/b/c/d): ");
+    printf("\nSelect Mee type (a/b/c/d): ");
     scanf(" %c", &meeType);
     meeType = tolower(meeType); // Make input case insensitive
     if (meeType < 'a' || meeType > 'd') {
-      printf("Invalid input. PLease select a valid meeType (a/b/c/d)\n");
+      printf("Invalid input. Please select a valid mee type (a/b/c/d)\n");
     }
   } while (meeType < 'a' || meeType > 'd');
   order->type = meeType;
@@ -247,11 +248,11 @@ void getOrder(Order *order) {
     do {
       displayExtras();
       do {
-        printf("Select an extra (a/b/c/d) or 'q' to quit: ");
+        printf("\nSelect an extra (a/b/c/d) or 'q' to quit: ");
         scanf(" %c", &extraType);
         extraType = tolower(extraType); // Make input case insensitive
-        if (extraType < 'a' || extraType > 'd') {
-          printf("Invalid input. PLease select a valid extras (a/b/c/d)\n");
+        if (extraType < 'a' || extraType > 'd' && extraType != 'q') {
+          printf("Invalid input. Please select a valid extras (a/b/c/d)\n");
         }
       } while ((extraType < 'a' || extraType > 'd') && extraType != 'q');
 
@@ -395,7 +396,7 @@ void writeTrxLogs(Order order[], int orderCount) {
         fprintf(fptr, " %-7s |", "-");
       }
     }
-    fprintf(fptr, " RM%6.2f\n", order[i].price);
+    fprintf(fptr, " %8.2f\n", order[i].price);
   }
 
   // Write the latest total sales and receipt number for next use
@@ -478,7 +479,7 @@ void writeTrxFile() {
   }
   fprintf(fptr_transactions, "-------------------------------------------------"
                              "------------------------------------------\n");
-  fprintf(fptr_transactions, "%82s%6.2f", "Total:", totalSales);
+  fprintf(fptr_transactions, "%79s%9.2f", "Total:", totalSales);
 
   fclose(fptr_transactions);
   fclose(fptr_logs);
