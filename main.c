@@ -263,7 +263,7 @@ void getOrder(Order *order) {
           if (scanf("%d", &extraQty) != 1 || extraQty < 0) {
             printf("Invalid quantity. Please enter a non-negative number\n");
 
-            // See Line 90 for explanation
+            // See Line 102 for explanation
             while (getchar() != '\n')
               ;
             extraQty = -1;
