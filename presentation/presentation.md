@@ -2,6 +2,7 @@
 theme: default
 backgroundColor: #ffffff
 autoScaling: false
+paginate: true
 ---
 
 <style>
@@ -39,6 +40,20 @@ div.threecols p.break {
 }
 </style>
 
+# Follow along
+
+<div class="twocols">
+
+![qr](./assets/qr.png)
+
+Scan or use or use
+https://shorturl.at/EqZkt
+for code and slides
+
+</div>
+
+---
+
 # Preface
 
 _Type_: Refers to the type of toppings (Kosong, Ayam...)
@@ -72,7 +87,30 @@ _Size_: Referes to the menu size (Regular, Special)
 
 ---
 
-### All important variables in one place
+# Program flow
+
+1. User choose to order
+   - User chooses their Mee Kolok type and size
+   - User decides if they want extras, if so what and how many
+2. User can check their current order(s) by choosing "Display Receipt"
+   - User can decide if they want to add more orders or finalize their order
+3. User finalizes their order and transactions is saved to a file
+
+---
+
+# Code
+
+⬇️ From top to bottom ⬇️
+
+```c
+#include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+```
+
+---
+
+### All prices in one place
 
 ```c
 #define MAX_ORDERS 4
@@ -146,10 +184,6 @@ Size
 - The index represent the type of extras
 - The value in each index represents the amount
 
----
-
-### Example
-
 ```c
 myOrder.extras = [1, 0, 2, 0];
 ```
@@ -165,12 +199,13 @@ Corresponds to:
 
 ---
 
-### Functions
+### Functions (prototype)
 
 ```c
 void displayMenu();
 void displayExtras();
 void displayOperations();
+
 void displayReceipt(Order order[], int orderCount);
 
 void getOrder(Order *order);
@@ -184,7 +219,7 @@ void writeTrxFile();
 
 ---
 
-### `main()` function
+#### `main()` function (line 83-144)
 
 ```c
 int main() {
@@ -196,6 +231,7 @@ int main() {
   printf("----------------------------------\n");
   printf("Welcome to Mee Kolok Nyaman Store!\n");
   printf("----------------------------------\n");
+
   do {
     printf("\nOrders available: %d\n", MAX_ORDERS - orderCount);
 
@@ -226,12 +262,11 @@ int main() {
 
       printf("Please make an order!\n");
       break;
-    default:
+    default: // Any other options besides available
       printf("\nInvalid option, Please choose a valid operation\n");
       break;
     }
   } while (orderCount < MAX_ORDERS);
-
   displayReceipt(orders, orderCount);
   printf("You have reached your order limit!. Come again another time\n");
   writeTrxLogs(orders, orderCount);
@@ -243,7 +278,7 @@ int main() {
 
 ---
 
-`Line`
+#### Line 99-110 (input handling)
 
 ```c
 ...
@@ -255,7 +290,7 @@ if (scanf("%d", &operation) != 1) {
     // Reference:
     // https://stackoverflow.com/questions/7898215/how-can-i-clear-an-input-buffer-in-c
     // TLDR: Better than just using getchar() because it consumes all
-    // characters in buffer overflow
+    // characters in input buffer
     while (getchar() != '\n')
         ;
     continue;
@@ -264,6 +299,8 @@ if (scanf("%d", &operation) != 1) {
 ```
 
 ---
+
+#### Line 112-134 (operations)
 
 ```c
 ...
@@ -301,7 +338,7 @@ do {
   ...
 } while (orderCount < MAX_ORDERS);
 
-// Do the same operation as finalize order when order limit is reached
+// Do the same operation as "Finalize order" when order limit is reached
 displayReceipt(orders, orderCount);
 printf("You have reached your order limit!. Come again another time\n");
 writeTrxLogs(orders, orderCount);
@@ -314,9 +351,9 @@ writeTrxFile();
 
 ---
 
-### Helper display functions
+### Simple display functions (Line 149-194)
 
-Used mainly to declutter functions
+Used mainly to minimize mess in other functions
 
 `void displayMenu()`
 
@@ -376,7 +413,141 @@ void displayOperations() {
 
 ---
 
-### `displayReceipt()` function
+### `getOrder()` function (Line 196-279) - Main order section
+
+```c
+void getOrder(Order *order) {
+  displayMenu();
+
+  char meeType;
+  do {
+    printf("Select Mee type (a/b/c/d): ");
+    scanf(" %c", &meeType);
+    meeType = tolower(meeType); // Make input case insensitive
+    if (meeType < 'a' || meeType > 'd') {
+      printf("Invalid input. PLease select a valid meeType (a/b/c/d)\n");
+    }
+  } while (meeType < 'a' || meeType > 'd');
+  order->type = meeType; // Assign user choice to order
+
+  if (meeType != 'a') { // Prompt user to select size if mee type is not 'a' (Kosong)
+    do {
+      printf("Select size (R for Regular, S for Special): ");
+      scanf(" %c", &order->size);
+      order->size = toupper(order->size); // Make input case insensitive
+      if (order->size != 'R' && order->size != 'S') {
+        printf("Invalid input. Please select a valid size (R/S).\n");
+      }
+    } while (order->size != 'R' && order->size != 'S');
+  } else {
+    order->size = 'R'; // Defaults mee type 'a' (Kosong) to regular
+  }
+...
+```
+
+---
+
+(cont...) Extras order section
+
+```c
+...
+  char addExtras;
+  int extraQty;
+  char extraType;
+
+  // Set initial values of all extras to 0
+  for (int i = 0; i < MAX_ORDERS; i++) {
+    order->extras[i] = 0;
+  }
+
+  do {
+    printf("Do you want extras? (y/n): ");
+    scanf(" %c", &addExtras);
+    addExtras = tolower(addExtras); // Make input case insensitive
+    if (addExtras != 'y' && addExtras != 'n') {
+      printf("Invalid input. Please enter 'y' or 'n'\n");
+    }
+  } while (addExtras != 'y' && addExtras != 'n');
+...
+```
+
+---
+
+(cont...)
+
+```c
+...
+  if (addExtras == 'y') {
+    do {
+      displayExtras();
+      do {
+        printf("Select an extra (a/b/c/d) or 'q' to quit: ");
+        scanf(" %c", &extraType);
+        extraType = tolower(extraType); // Make input case insensitive
+        if (extraType < 'a' || extraType > 'd') {
+          printf("Invalid input. PLease select a valid extras (a/b/c/d)\n");
+        }
+      } while ((extraType < 'a' || extraType > 'd') && extraType != 'q');
+
+      if (extraType >= 'a' && extraType <= 'd') {
+        do {
+          printf("Enter quantity: ");
+          // scanf() returns 1 if it is able to scan/assign a valid value
+          if (scanf("%d", &extraQty) != 1 || extraQty < 0) {
+            printf("Invalid quantity. Please enter a non-negative number\n");
+
+            // See Line 90 for explanation
+            while (getchar() != '\n')
+              ;
+            extraQty = -1;
+          }
+        } while (extraQty < 0);
+
+        order->extras[extraType - 'a'] += extraQty; // We can subtract with a char because a it is an int in the ASCII table
+      }
+    } while (extraType != 'q'); // Keep offering extras until user quits
+  }
+
+  order->price = getPrice(order); // Assign the price of the order
+}
+```
+
+---
+
+### `getPrice()` function (Line 281-305)
+
+```c
+float getPrice(Order *order) {
+  float price = 0.0;
+
+  switch (order->type) {
+  case 'a':               // Mi Kolok Kosong
+    price = MK_KOSONG_RG; // Special not available
+    break;
+  case 'b': // Mi Kolok Ayam
+    price = (order->size == 'R') ? MK_AYAM_RG : MK_AYAM_SP; // Short form of if else
+    break;
+  case 'c': // Mi Kolok Daging
+    price = (order->size == 'R') ? MK_DAGING_RG : MK_DAGING_SP; // ☝️
+    break;
+  case 'd': // Mi Kolok Tendon
+    price = (order->size == 'R') ? MK_TENDON_RG : MK_TENDON_SP; // 👆
+    break;
+  }
+
+  // Add the price of extras (qty * price)
+  price += order->extras[0] * EX_MEE;
+  price += order->extras[1] * EX_CHICKEN;
+  price += order->extras[2] * EX_MEAT;
+  price += order->extras[3] * EX_TENDON;
+
+  return price;
+}
+```
+
+---
+
+### `displayReceipt()` function (Line 307-367)
 
 ```c
 void displayReceipt(Order order[], int orderCount) {
@@ -410,6 +581,8 @@ void displayReceipt(Order order[], int orderCount) {
 
 ---
 
+(cont...)
+
 ```c
 ...
     if (order[i].extras[0] > 0)
@@ -437,132 +610,13 @@ void displayReceipt(Order order[], int orderCount) {
 
 ---
 
-`getOrder()` function
+### Example displayReceipt() output
 
-```c
-void getOrder(Order *order) {
-  displayMenu();
+<div class="twocols">
 
-  // ------------------ //
-  // Main Order section //
-  // ------------------ //
-  char meeType;
-  do {
-    printf("Select Mee type (a/b/c/d): ");
-    scanf(" %c", &meeType);
-    meeType = tolower(meeType); // Make input case insensitive
-    if (meeType < 'a' || meeType > 'd') {
-      printf("Invalid input. PLease select a valid meeType (a/b/c/d)\n");
-    }
-  } while (meeType < 'a' || meeType > 'd');
-  order->type = meeType;
+![receipt](./assets/receipt.png)
 
-  if (meeType != 'a') {
-    do {
-      printf("Select size (R for Regular, S for Special): ");
-      scanf(" %c", &order->size);
-      order->size = toupper(order->size); // Make input case insensitive
-      if (order->size != 'R' && order->size != 'S') {
-        printf("Invalid input. Please select a valid size (R/S).\n");
-      }
-    } while (order->size != 'R' && order->size != 'S');
-  } else {
-    order->size = 'R'; // Defaults type 'a' (Kosong) to regular
-  }
-...
-```
-
----
-
-```c
-...
-  // -------------- //
-  // Extras section //
-  // -------------- //
-  char addExtras;
-  int extraQty;
-  char extraType;
-
-  // Set initial values of all extras to 0
-  for (int i = 0; i < MAX_ORDERS; i++) {
-    order->extras[i] = 0;
-  }
-
-  do {
-    printf("Do you want extras? (y/n): ");
-    scanf(" %c", &addExtras);
-    addExtras = tolower(addExtras); // Make input case insensitive
-    if (addExtras != 'y' && addExtras != 'n') {
-      printf("Invalid input. Please enter 'y' or 'n'\n");
-    }
-  } while (addExtras != 'y' && addExtras != 'n');
-
-  if (addExtras == 'y') {
-    do {
-      displayExtras();
-      do {
-        printf("Select an extra (a/b/c/d) or 'q' to quit: ");
-        scanf(" %c", &extraType);
-        extraType = tolower(extraType); // Make input case insensitive
-        if (extraType < 'a' || extraType > 'd') {
-          printf("Invalid input. PLease select a valid extras (a/b/c/d)\n");
-        }
-      } while ((extraType < 'a' || extraType > 'd') && extraType != 'q');
-
-      if (extraType >= 'a' && extraType <= 'd') {
-        do {
-          printf("Enter quantity: ");
-          // scanf() returns 1 if it is able to scan/assign a valid value
-          if (scanf("%d", &extraQty) != 1 || extraQty < 0) {
-            printf("Invalid quantity. Please enter a non-negative number\n");
-
-            // See Line 90 for explanation
-            while (getchar() != '\n')
-              ;
-            extraQty = -1;
-          }
-        } while (extraQty < 0);
-
-        order->extras[extraType - 'a'] += extraQty;
-      }
-    } while (extraType != 'q');
-  }
-
-  order->price = getPrice(order);
-}
-```
-
----
-
-### `getPrice()` function
-
-```c
-float getPrice(Order *order) {
-  float price = 0.0;
-
-  switch (order->type) {
-  case 'a':               // Mi Kolok Kosong
-    price = MK_KOSONG_RG; // Special not available
-    break;
-  case 'b': // Mi Kolok Ayam
-    price = (order->size == 'R') ? MK_AYAM_RG : MK_AYAM_SP;
-    break;
-  case 'c': // Mi Kolok Daging
-    price = (order->size == 'R') ? MK_DAGING_RG : MK_DAGING_SP;
-    break;
-  case 'd': // Mi Kolok Tendon
-    price = (order->size == 'R') ? MK_TENDON_RG : MK_TENDON_SP;
-    break;
-  }
-
-  price += order->extras[0] * EX_MEE;
-  price += order->extras[1] * EX_CHICKEN;
-  price += order->extras[2] * EX_MEAT;
-  price += order->extras[3] * EX_TENDON;
-
-  return price;
-}
-```
+</div>
 
 ---
 
@@ -570,7 +624,38 @@ float getPrice(Order *order) {
 
 ---
 
-### `writeTrxLogs()` function
+# How our implementation works
+
+1. Read total sales and previous receipt number
+   - If file doesnt exist, then initiate it with initial value of 0.0 and 0
+2. Append to a file containing all transaction informations (logs.dat)
+3. Write a file containing the latest total sales and receipt number (info.dat)
+4. Compile all of the information from both of the previous file into a final file (transactions.dat)
+   - This file contains the table header and total sales information
+
+### All order ever made on the system is saved
+
+---
+
+### Related functions
+
+```c
+// Log file to keep track of all transactions
+void writeTrxLogs(Order order[], int orderCount);
+
+// File to keep track of sales and receipt number
+void writeTrxInfo(float currentTotal, int currentReceiptNumber);
+
+// Read total sales and receipt number
+void readTrxInfo(float *total, int *receiptNumber);
+
+// Compiles total sales and transaction data into a single file
+void writeTrxFile();
+```
+
+---
+
+### `writeTrxLogs()` function (Line 356-406)
 
 Write a file that keep track of all transaction
 
@@ -592,13 +677,15 @@ void writeTrxLogs(Order order[], int orderCount) {
 
 ---
 
+(cont...)
+
 ```c
 ...
   // Read and assign previous total sales and receipt number
-  readTrxInfo(&prevTotalSales, &prevReceiptNumber);
+  readTrxInfo(&prevTotalSales, &prevReceiptNumber); // Step 1
 
   float currentTotal = 0.0;
-  for (int i = 0; i < orderCount; i++) {
+  for (int i = 0; i < orderCount; i++) { // Step 2
     fprintf(fptr, "%03d         |", prevReceiptNumber + 1);
     switch (order[i].type) {
     case 'a':
@@ -619,22 +706,24 @@ void writeTrxLogs(Order order[], int orderCount) {
 
 ---
 
+(cont...)
+
 ```c
 ...
-    currentTotal += order[i].price;
+    currentTotal += order[i].price; // Increment current total for each order
     fprintf(fptr, " %-4c |", order[i].size);
     for (int j = 0; j < 4; j++) {
       if (order[i].extras[j] != 0) {
-        fprintf(fptr, " %-7d |", order[i].extras[j]);
+        fprintf(fptr, " %-7d |", order[i].extras[j]); // If there is an extra
       } else {
-        fprintf(fptr, " %-7s |", "-");
+        fprintf(fptr, " %-7s |", "-"); // If there is no extra
       }
     }
     fprintf(fptr, " RM%6.2f\n", order[i].price);
   }
 
   // Write the latest total sales and receipt number for next use
-  writeTrxInfo(prevTotalSales + currentTotal, prevReceiptNumber + 1);
+  writeTrxInfo(prevTotalSales + currentTotal, prevReceiptNumber + 1); // Step 3
 
   fclose(fptr);
 }
@@ -648,7 +737,7 @@ void writeTrxLogs(Order order[], int orderCount) {
 
 ---
 
-### `writeTrxInfo()` function
+### `writeTrxInfo()` function (Line 408-422)
 
 ```c
 void writeTrxInfo(float currentTotal, int currentReceiptNumber) {
@@ -677,7 +766,7 @@ void writeTrxInfo(float currentTotal, int currentReceiptNumber) {
 
 ---
 
-### `readTrxInfo()` function
+### `readTrxInfo()` function (Line 424-440)
 
 Reads and assign the latest total sales and last receipt number to its arguments
 
@@ -703,7 +792,7 @@ void readTrxInfo(float *total, int *receiptNumber) {
 
 ---
 
-### `writeTrxFile()` function
+### `writeTrxFile()` function (Line 442-487)
 
 ```c
 void writeTrxFile() {
@@ -747,3 +836,13 @@ void writeTrxFile() {
   fclose(fptr_info);
 }
 ```
+
+---
+
+### Example file output for `writeTrxFile()`
+
+![transactions](./assets/transactions.png)
+
+---
+
+# _Fin._
