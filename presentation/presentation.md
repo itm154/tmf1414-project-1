@@ -46,9 +46,7 @@ div.threecols p.break {
 
 ![qr](./assets/qr.png)
 
-Scan or use or use
-https://shorturl.at/EqZkt
-for code and slides
+Scan for code and slides
 
 </div>
 
@@ -65,7 +63,7 @@ _Size_: Referes to the menu size (Regular, Special)
 
 - Display menu for user to take orders
 - Allow maximum of 4 packs of MK per order
-- Display details of MK orders made by each customer
+- Display details of mee kolok orders made by each customer
 - Display the calculated total price in a single receipt
 - Take order continuously from customers until user choose to exit
 - Display the transaction details at anytime when it is needed
@@ -80,7 +78,7 @@ _Size_: Referes to the menu size (Regular, Special)
    - Handles all user input for Mee Kolok type, size, and extras
 2. Receipt generation:
    - Generates highly detailed formatted receipts
-3. Persisntent transaction data storage:
+3. Persistent transaction data storage:
    - Saves all orders and sales data into an easily readable file
 4. Error Handling:
    - Input validation present across all user facing inputs
